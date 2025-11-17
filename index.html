@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Temp Email @aabkhan.pp.ua</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .email { border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px; }
+        #current-email { background: #f0f8ff; padding: 10px; border-radius: 5px; margin: 20px 0; }
+        .email-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .email-subject { font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+    <h1>📧 Temporary Email Service</h1>
+    
+    <div id="current-email">
+        <strong>Your temporary email:</strong><br>
+        <input type="text" id="email-display" value="anything@aabkhan.pp.ua" style="width: 300px; padding: 5px;" readonly>
+        <button onclick="copyEmail()">Copy</button>
+    </div>
+    
+    <button onclick="loadEmails()">Refresh Inbox</button>
+    <button onclick="generateNewEmail()">New Random Email</button>
+    
+    <h2>Inbox:</h2>
+    <div id="emails">Loading emails...</div>
+
+    <script>
+        const WORKER_URL = 'https://misty-snowflake-d062.aabkhan402.workers.dev';
+        let currentEmail = 'test@aabkhan.pp.ua';
+        
+        function generateNewEmail() {
+            const randomId = Math.random().toString(36).substring(7);
+            currentEmail = `${randomId}@aabkhan.pp.ua`;
+            document.getElementById('email-display').value = currentEmail;
+        }
+        
+        function copyEmail() {
+            const emailInput = document.getElementById('email-display');
+            emailInput.select();
+            document.execCommand('copy');
+            alert('Email copied: ' + currentEmail);
+        }
+        
+        async function loadEmails() {
+            try {
+                const response = await fetch(`${WORKER_URL}/api/emails`);
+                const emails = await response.json();
+                
+                if (emails.length === 0) {
+                    document.getElementById('emails').innerHTML = '<p>No emails yet. Share your address above to receive emails!</p>';
+                    return;
+                }
+                
+                // Sort by timestamp (newest first)
+                emails.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                document.getElementById('emails').innerHTML = emails.map(email => `
+                    <div class="email">
+                        <div class="email-header">
+                            <span><strong>To:</strong> ${email.to}</span>
+                            <span style="color: #666; font-size: 12px;">${new Date(email.timestamp).toLocaleString()}</span>
+                        </div>
+                        <div><strong>From:</strong> ${email.from}</div>
+                        <div class="email-subject">${email.subject}</div>
+                        <div style="margin-top: 10px; white-space: pre-wrap;">${email.text || 'No text content'}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('emails').innerHTML = '<p>Error loading emails. Please try again.</p>';
+            }
+        }
+        
+        // Auto-refresh every 5 seconds
+        setInterval(loadEmails, 5000);
+        loadEmails();
+    </script>
+</body>
+</html>
