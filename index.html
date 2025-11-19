@@ -26,15 +26,17 @@
     <div id="emails">Loading emails...</div>
 
     <script>
-        const WORKER_URL = 'https://misty-snowflake-d062.aabkhan402.workers.dev';
-        let currentEmail = 'test@aabkhan.pp.ua';
+        const WORKER_URL = 'https://misty-snowflake-d062.aabkhan402.workers.dev'; // Ensure this is the correct deployed worker URL
+        let currentEmail = 'anything@aabkhan.pp.ua';
         
+        // Generate a new random email address
         function generateNewEmail() {
             const randomId = Math.random().toString(36).substring(7);
             currentEmail = `${randomId}@aabkhan.pp.ua`;
             document.getElementById('email-display').value = currentEmail;
         }
         
+        // Copy the current email to clipboard
         function copyEmail() {
             const emailInput = document.getElementById('email-display');
             emailInput.select();
@@ -42,11 +44,18 @@
             alert('Email copied: ' + currentEmail);
         }
         
+        // Load emails from the API endpoint
         async function loadEmails() {
             try {
                 const response = await fetch(`${WORKER_URL}/api/emails`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch emails');
+                }
+
                 const emails = await response.json();
                 
+                // Check if no emails exist
                 if (emails.length === 0) {
                     document.getElementById('emails').innerHTML = '<p>No emails yet. Share your address above to receive emails!</p>';
                     return;
@@ -55,6 +64,7 @@
                 // Sort by timestamp (newest first)
                 emails.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
+                // Display the emails
                 document.getElementById('emails').innerHTML = emails.map(email => `
                     <div class="email">
                         <div class="email-header">
@@ -66,14 +76,16 @@
                         <div style="margin-top: 10px; white-space: pre-wrap;">${email.text || 'No text content'}</div>
                     </div>
                 `).join('');
+                
             } catch (error) {
-                document.getElementById('emails').innerHTML = '<p>Error loading emails. Please try again.</p>';
+                console.error('Error loading emails:', error);
+                document.getElementById('emails').innerHTML = '<p>Error loading emails. Please try again later.</p>';
             }
         }
-        
+
         // Auto-refresh every 5 seconds
         setInterval(loadEmails, 5000);
-        loadEmails();
+        loadEmails(); // Initial load of emails
     </script>
 </body>
 </html>
